@@ -1,16 +1,9 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
     provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "sqlite"
-    // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-    // Further reading:
-    // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
+    provider = "postgresql"
     url      = env("DATABASE_URL")
 }
 
@@ -55,6 +48,11 @@ model User {
     image         String?
     accounts      Account[]
     sessions      Session[]
+    epics Epic[]
+    projects Project[]
+    tasks Task[]
+    routines Routine[]
+    // schedule Schedule?
 }
 
 model VerificationToken {
@@ -63,4 +61,79 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+model Epic {
+    id            String    @id @default(cuid())
+    name          String
+    userId String
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    projects Project[]
+}
+
+model Project {
+    id            String    @id @default(cuid())
+    name          String
+    
+    userId String
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    epicId String
+    epic Epic @relation(fields: [epicId], references: [id], onDelete: Cascade)
+
+    tasks Task[]
+}
+
+model Task {
+    id            String    @id @default(cuid())
+    name          String
+    description String
+    status  Status    @default(TODO)
+
+    userId String
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    projects Project[]
+}
+
+enum Status {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+model Routine {
+    id            String    @id @default(cuid())
+    name          String
+    description String
+
+    // Day on which the routine happens
+    days Days[]
+
+    // Time at which the routine happens
+    time  DateTime   @db.Time(0)
+
+
+    userId String
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum Days {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+
+// Timer schedule
+model Schedule {
+    id            String    @id @default(cuid())
+    name          String
+
+    userId String
+    // user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
